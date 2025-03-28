@@ -1,4 +1,4 @@
-import { apiKey } from './config.js';
+const apiKey = '27036b1e481dcbd3b1c0f813'; // I can hide the key only if it's written using Vite or with the backend
 const apiUrl = `https://v6.exchangerate-api.com/v6/${apiKey}/latest/`;
 
 const fromCurrency = document.getElementById('from-currency');
