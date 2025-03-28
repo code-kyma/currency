@@ -1,57 +1,57 @@
-const apiKey = '27036b1e481dcbd3b1c0f813'; // I can hide the key only if it's written using Vite or with the backend
-const apiUrl = `https://v6.exchangerate-api.com/v6/${apiKey}/latest/`;
+const apiUrl = 'https://api.frankfurter.app/latest';
 
-const fromCurrency = document.getElementById('from-currency');
-const toCurrency = document.getElementById('to-currency');
-const amount = document.getElementById('amount');
+const fromCurrencyEl = document.getElementById('from-currency');
+const toCurrencyEl = document.getElementById('to-currency');
+const amountEl = document.getElementById('amount');
 const result = document.getElementById('result');
-const converterForm = document.getElementById('converter-form')
+const converterForm = document.getElementById('converter-form');
 
-fetch(apiUrl + 'USD')
+fetch('https://api.frankfurter.app/currencies')
     .then(response => response.json())
     .then(data => {
-        const currencies = Object.keys(data.conversion_rates);
+        const currencies = Object.keys(data);
         currencies.forEach(currency => {
             const option1 = document.createElement('option');
             const option2 = document.createElement('option');
             option1.value = option2.value = currency;
             option1.text = option2.text = currency;
-            fromCurrency.appendChild(option1);
-            toCurrency.appendChild(option2);
-
-            function restoreCurrencies() {
-                fromCurrency.value = localStorage.getItem('from')
-                toCurrency.value = localStorage.getItem('to')
-                amount.value = localStorage.getItem('amount')
-                result.innerText = localStorage.getItem('result')
-            }
-
-            restoreCurrencies()
+            fromCurrencyEl.appendChild(option1);
+            toCurrencyEl.appendChild(option2);
         });
+
+        restoreCurrencies();
     })
     .catch(error => {
         console.error('Error loading currency list:', error);
     });
 
 converterForm.addEventListener('submit', (event) => {
-    event.preventDefault()
-    const from1 = fromCurrency.value;
-    const to = toCurrency.value;
-    const amountValue = amount.value;
+    event.preventDefault();
+    const fromCurrency = fromCurrencyEl.value;
+    const to = toCurrencyEl.value;
+    const amountValue = amountEl.value;
+
+    if (!fromCurrency || !to) {
+        alert('Please select both currencies.');
+        return;
+    }
 
     if (!amountValue || amountValue <= 0) {
         alert('Please enter a valid amount.');
         return;
     }
 
-    fetch(`${apiUrl}${from1}`)
+    if (fromCurrency === to) {
+        result.innerText = 'Please select two different currencies.';
+        return;
+    }
+
+    fetch(`${apiUrl}?amount=${amountValue}&from=${fromCurrency}&to=${to}`)
         .then(response => response.json())
         .then(data => {
-            const rate = data.conversion_rates[to];
-            const convertedAmount = (amountValue * rate).toFixed(2);
-            result.innerText = `${amountValue} ${from1} = ${convertedAmount} ${to}`;
-
-            saveCurrencies()
+            const convertedAmount = data.rates[to].toFixed(2);
+            result.innerText = `${amountValue} ${fromCurrency} = ${convertedAmount} ${to}`;
+            saveCurrencies();
         })
         .catch(error => {
             alert('Error fetching conversion rates. Please try again.');
@@ -59,13 +59,16 @@ converterForm.addEventListener('submit', (event) => {
         });
 });
 
-
-function saveCurrencies(){
-    localStorage.setItem('from', fromCurrency.value)
-    localStorage.setItem('to', toCurrency.value)
-    localStorage.setItem('amount', amount.value)
-    localStorage.setItem('result', result.innerText)
-
+function saveCurrencies() {
+    localStorage.setItem('from', fromCurrencyEl.value);
+    localStorage.setItem('to', toCurrencyEl.value);
+    localStorage.setItem('amount', amountEl.value);
+    localStorage.setItem('result', result.innerText);
 }
 
-
+function restoreCurrencies() {
+    fromCurrencyEl.value = localStorage.getItem('from') || '';
+    toCurrencyEl.value = localStorage.getItem('to') || '';
+    amountEl.value = localStorage.getItem('amount') || 1000;
+    result.innerText = localStorage.getItem('result') || '';
+}
